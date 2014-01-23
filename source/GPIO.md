@@ -88,3 +88,5 @@ echo $VAL > /sys/class/gpio/gpio$1/value
 ### Refs
 
 * <http://wiki.openwrt.org/doc/hardware/port.gpio>
+
+* <https://forum.openwrt.org/viewtopic.php?id=36561>
