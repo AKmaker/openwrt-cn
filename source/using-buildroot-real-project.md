@@ -353,6 +353,95 @@ make
 
 * This will be improved in the upcoming Buildroot version.
 
+### Using NFS during application development
+
+* Mounting the root filesystem over NFS is very practical during development.
+
+* The output/target directory created by Buildroot cannot directly be used for NFS mount, because it does not contain any device file and the permissions may not be correct. This is because Buildroot runs as non-root.
+
+* The recommended way is:
+1. Ask Buildroot to generate a tarball image of the root filesystem.
+2. Uncompress this tarball image, as root, in some directory exported by NFS.
+3. make && tar -xf -C /nfsroot/output/images/rootfs.tar
+
+* /nfsroot should be exported with the NFS options rw and no_root_squash in /etc/exports.
+
+### Storing the project configuration
+
+* Once you have defined a Buildroot configuration for your project, you want to save it somewhere and allow others to use it.
+
+* Just do:
+1. make savedefconfig
+  Create a defconfig file in the top Buildroot source directory.
+2. mv defconfig configs/company_project_defconfig
+
+* Others can then load this configuration very easily:
+make company_project_defconfig
+
+### Summarizing the project-specific bits
+
+* In the end, your project-specific bits are in:
+1. board/<company>/<project>/ for the kernel and bootloader patches and configuration, post-build script and root filesystem overlay.
+2. configs/company_project_defconfig for the Buildroot configuration.
+3. package/company/ for your specific packages
+
+* Your modifications are cleanly isolated from the Buildroot core, making it easy to upgrade Buildroot when needed.
+
+### Be prepared for offline builds
+
+* When working on a project, you'll want to make sure that your build can be done offline in order to not depend on resources that may disappear from the Net.
+
+* Here are some useful Buildroot features to do so:
+1. **make source** will download into the Buildroot download cache all the files required to do the build.
+2. **make external-deps** will list the name of all the files (essentially tarballs) that are required to do the build. Identifies the useful tarballs in the Buildroot download cache.
+3. With the **BR2 PRIMARY SITE** configuration option, Buildroot will download files from a specified HTTP/FTP server before trying to reach the official site for each package. Useful to create an internal server.
+4. The location of the local download cache can be configured
+with **BR2 DL DIR** or with the BUILDROOT DL DIR environment
+variable.
+
+### In 2011.11: local method
+* The upcoming 2011.11 release will natively support packages whose source code is in a local directory.
+* Simply need to use:
+
+```
+MYPKG SITE = /some/local/directory
+MYPKG SITE METHOD = local
+```
+
+* Buildroot will rsync the source code from the specified location into its build directory in output/build/pkg-version.
+
+### In 2011.11: source directory override
+
+* A package typically specifies a HTTP or FTP location for its tarball.
+* You might want to use a local source code for this package, instead of the official tarball.
+* The upcoming 2011.11 allows to specify an override file
+1. This file is simply a makefile with variable assignments
+2. Those variable assignments allows you to tell Buildroot: "for
+package foo, use the source code in this directory rather than
+the normal tarball location".
+3. ZLIB OVERRIDE SRCDIR = /home/foo/my-zlib/
+4. LINUX OVERRIDE SRCDIR = /home/foo/linux-2.6/
+* The source code is rsync'ed from the given source directory into the Buildroot build directory.
+
+### In 2011.11: other features
+
+* Addition of make <pkg>-reconfigure and make <pkg>-rebuild
+1. Instead of manually manipulating the stamp files, those commands restart the package build process at the configuration stage or at the compilation stage.
+2. Makes using Buildroot during kernel or application development a lot easier.
+
+* Support for fetching from Mercurial repository.
+* Support for fetching using scp, both for packages and for the primary download site
+
+### Conclusion
+* Buildroot has multiple features making it easy to customize the generated system
+1. Addition of kernel and bootloader patches and configuration.
+2. Addition of project specific configuration files and scripts.
+3. Addition of project specific packages.
+
+* These features makes Buildroot suitable to generate embedded Linux systems for a wide range of projects, with a preference on moderately large systems.
+
+* From our experience, Buildroot also remains simple enough to be used and understood by non-Linux experts.
+
 ### Refs
 
 * PDF version PPT <Using-buildroot-real-project.pdf>
